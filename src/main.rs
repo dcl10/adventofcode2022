@@ -35,5 +35,12 @@ fn main() {
     println!(
         "Elf {} has the most calories with {}",
         highest_elf.id, highest_elf.calories
-    )
+    );
+
+    let mut top_3_total = 0;
+    for _ in 0..3 {
+        top_3_total += elves.pop().unwrap().calories;
+    }
+
+    println!("The top 3 elves have {} calories", top_3_total)
 }
