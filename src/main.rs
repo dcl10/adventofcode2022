@@ -1,21 +1,17 @@
-use std::{fs, io};
+use std::{
+    fs,
+    io::{BufRead, BufReader},
+};
 
-#[derive(Clone, Copy)]
 enum Move {
     Rock,
     Paper,
     Scissors,
 }
 
-enum Outcome {
-    Loss(u32),
-    Draw(u32),
-    Win(u32),
-}
-
-const ROCK: u32 = 0;
-const PAPER: u32 = 3;
-const SCISSORS: u32 = 6;
+const ROCK: u32 = 1;
+const PAPER: u32 = 2;
+const SCISSORS: u32 = 3;
 const LOSS: u32 = 0;
 const DRAW: u32 = 3;
 const WIN: u32 = 6;
@@ -26,22 +22,50 @@ struct Match {
 }
 
 impl Match {
-    fn play(&self) -> Outcome {
-        match (self.player_1_move, self.player_2_move) {
-            (Move::Rock, Move::Rock) => Outcome::Draw(ROCK + ROCK + DRAW),
-            (Move::Rock, Move::Paper) => Outcome::Loss(ROCK + PAPER + LOSS),
-            (Move::Rock, Move::Scissors) => Outcome::Win(ROCK + SCISSORS + WIN),
-            (Move::Paper, Move::Rock) => Outcome::Win(PAPER + ROCK + WIN),
-            (Move::Paper, Move::Paper) => Outcome::Draw(PAPER + PAPER + DRAW),
-            (Move::Paper, Move::Scissors) => Outcome::Loss(PAPER + SCISSORS + LOSS),
-            (Move::Scissors, Move::Rock) => Outcome::Loss(SCISSORS + ROCK + LOSS),
-            (Move::Scissors, Move::Paper) => Outcome::Win(SCISSORS + PAPER + WIN),
-            (Move::Scissors, Move::Scissors) => Outcome::Draw(SCISSORS + SCISSORS + DRAW),
+    fn play(&self) -> u32 {
+        match (&self.player_1_move, &self.player_2_move) {
+            (Move::Rock, Move::Rock) => ROCK + ROCK + DRAW,
+            (Move::Rock, Move::Paper) => ROCK + PAPER + LOSS,
+            (Move::Rock, Move::Scissors) => ROCK + SCISSORS + WIN,
+            (Move::Paper, Move::Rock) => PAPER + ROCK + WIN,
+            (Move::Paper, Move::Paper) => PAPER + PAPER + DRAW,
+            (Move::Paper, Move::Scissors) => PAPER + SCISSORS + LOSS,
+            (Move::Scissors, Move::Rock) => SCISSORS + ROCK + LOSS,
+            (Move::Scissors, Move::Paper) => SCISSORS + PAPER + WIN,
+            (Move::Scissors, Move::Scissors) => SCISSORS + SCISSORS + DRAW,
         }
     }
 }
 
 fn main() {
-    let strategy_file = fs::File::open("data/day2.txt").expect("Could not find data file");
-    let mut buffer = io::BufReader::new(strategy_file);
+    let strategy_file = fs::File::open("data/day2-2.txt").expect("Could not find data file");
+    let mut scores = Vec::new();
+
+    for line in BufReader::new(strategy_file).lines() {
+        match line {
+            Ok(l) => {
+                let moves: Vec<&str> = l.trim().split(" ").collect();
+                let my_move = match moves[0] {
+                    "A" => Move::Rock,
+                    "B" => Move::Paper,
+                    "C" => Move::Scissors,
+                    _ => panic!("Not a valid move for player 1"),
+                };
+                let their_move = match moves[1] {
+                    "X" => Move::Rock,
+                    "Y" => Move::Paper,
+                    "Z" => Move::Scissors,
+                    _ => panic!("Not a valid move for player 2"),
+                };
+                let match_ = Match {
+                    player_1_move: my_move,
+                    player_2_move: their_move,
+                };
+                scores.push(match_.play());
+            }
+            Err(_) => println!("Uh oh! Couldn't read the moves"),
+        }
+    }
+
+    println!("My Score: {}", scores.into_iter().sum::<u32>())
 }
