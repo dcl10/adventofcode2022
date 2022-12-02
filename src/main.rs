@@ -17,49 +17,49 @@ const DRAW: u32 = 3;
 const WIN: u32 = 6;
 
 struct Match {
-    player_1_move: Move,
-    player_2_move: Move,
+    opponent: Move,
+    me: Move,
 }
 
 impl Match {
     fn play(&self) -> u32 {
-        match (&self.player_1_move, &self.player_2_move) {
-            (Move::Rock, Move::Rock) => ROCK + ROCK + DRAW,
-            (Move::Rock, Move::Paper) => ROCK + PAPER + LOSS,
-            (Move::Rock, Move::Scissors) => ROCK + SCISSORS + WIN,
-            (Move::Paper, Move::Rock) => PAPER + ROCK + WIN,
-            (Move::Paper, Move::Paper) => PAPER + PAPER + DRAW,
-            (Move::Paper, Move::Scissors) => PAPER + SCISSORS + LOSS,
-            (Move::Scissors, Move::Rock) => SCISSORS + ROCK + LOSS,
-            (Move::Scissors, Move::Paper) => SCISSORS + PAPER + WIN,
-            (Move::Scissors, Move::Scissors) => SCISSORS + SCISSORS + DRAW,
+        match (&self.opponent, &self.me) {
+            (Move::Rock, Move::Rock) => ROCK + DRAW,
+            (Move::Rock, Move::Paper) => PAPER + WIN,
+            (Move::Rock, Move::Scissors) => SCISSORS + LOSS,
+            (Move::Paper, Move::Rock) => ROCK + LOSS,
+            (Move::Paper, Move::Paper) => PAPER + DRAW,
+            (Move::Paper, Move::Scissors) => SCISSORS + WIN,
+            (Move::Scissors, Move::Rock) => ROCK + WIN,
+            (Move::Scissors, Move::Paper) => PAPER + LOSS,
+            (Move::Scissors, Move::Scissors) => SCISSORS + DRAW,
         }
     }
 }
 
 fn main() {
-    let strategy_file = fs::File::open("data/day2-2.txt").expect("Could not find data file");
+    let strategy_file = fs::File::open("data/day2.txt").expect("Could not find data file");
     let mut scores = Vec::new();
 
     for line in BufReader::new(strategy_file).lines() {
         match line {
             Ok(l) => {
                 let moves: Vec<&str> = l.trim().split(" ").collect();
-                let my_move = match moves[0] {
+                let their_move = match moves[0] {
                     "A" => Move::Rock,
                     "B" => Move::Paper,
                     "C" => Move::Scissors,
-                    _ => panic!("Not a valid move for player 1"),
+                    _ => panic!("Not a valid move for opponent"),
                 };
-                let their_move = match moves[1] {
+                let my_move = match moves[1] {
                     "X" => Move::Rock,
                     "Y" => Move::Paper,
                     "Z" => Move::Scissors,
-                    _ => panic!("Not a valid move for player 2"),
+                    _ => panic!("Not a valid move for me"),
                 };
                 let match_ = Match {
-                    player_1_move: my_move,
-                    player_2_move: their_move,
+                    opponent: their_move,
+                    me: my_move,
                 };
                 scores.push(match_.play());
             }
