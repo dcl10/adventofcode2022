@@ -1,46 +1,140 @@
-use std::fs;
+use std::{
+    fs,
+    io::{BufRead, BufReader},
+};
 
-struct Elf {
-    id: i32,
-    calories: i32,
+enum Move {
+    Rock,
+    Paper,
+    Scissors,
+}
+
+enum Outcome {
+    Loss,
+    Draw,
+    Win,
+}
+
+const ROCK: u32 = 1;
+const PAPER: u32 = 2;
+const SCISSORS: u32 = 3;
+const LOSS: u32 = 0;
+const DRAW: u32 = 3;
+const WIN: u32 = 6;
+
+struct Match {
+    opponent: Move,
+    me: Move,
+}
+
+impl Match {
+    fn play(&self) -> u32 {
+        match (&self.opponent, &self.me) {
+            (Move::Rock, Move::Rock) => ROCK + DRAW,
+            (Move::Rock, Move::Paper) => PAPER + WIN,
+            (Move::Rock, Move::Scissors) => SCISSORS + LOSS,
+            (Move::Paper, Move::Rock) => ROCK + LOSS,
+            (Move::Paper, Move::Paper) => PAPER + DRAW,
+            (Move::Paper, Move::Scissors) => SCISSORS + WIN,
+            (Move::Scissors, Move::Rock) => ROCK + WIN,
+            (Move::Scissors, Move::Paper) => PAPER + LOSS,
+            (Move::Scissors, Move::Scissors) => SCISSORS + DRAW,
+        }
+    }
+}
+
+struct MatchUnencrypted {
+    opponent: Move,
+    me: Outcome,
+}
+
+impl MatchUnencrypted {
+    fn play(&self) -> u32 {
+        match (&self.opponent, &self.me) {
+            (Move::Rock, Outcome::Loss) => SCISSORS + LOSS,
+            (Move::Rock, Outcome::Draw) => ROCK + DRAW,
+            (Move::Rock, Outcome::Win) => PAPER + WIN,
+            (Move::Paper, Outcome::Loss) => ROCK + LOSS,
+            (Move::Paper, Outcome::Draw) => PAPER + DRAW,
+            (Move::Paper, Outcome::Win) => SCISSORS + WIN,
+            (Move::Scissors, Outcome::Loss) => PAPER + LOSS,
+            (Move::Scissors, Outcome::Draw) => SCISSORS + DRAW,
+            (Move::Scissors, Outcome::Win) => ROCK + WIN,
+        }
+    }
+}
+
+fn play_tournament(path: &str) -> u32 {
+    let file = fs::File::open(path).expect("Could not find data file");
+    let mut scores = Vec::new();
+
+    for line in BufReader::new(file).lines() {
+        match line {
+            Ok(l) => {
+                let moves: Vec<&str> = l.trim().split(" ").collect();
+                let their_move = match moves[0] {
+                    "A" => Move::Rock,
+                    "B" => Move::Paper,
+                    "C" => Move::Scissors,
+                    _ => panic!("Not a valid move for opponent"),
+                };
+                let my_move = match moves[1] {
+                    "X" => Move::Rock,
+                    "Y" => Move::Paper,
+                    "Z" => Move::Scissors,
+                    _ => panic!("Not a valid move for me"),
+                };
+                let match_ = Match {
+                    opponent: their_move,
+                    me: my_move,
+                };
+                scores.push(match_.play());
+            }
+            Err(_) => println!("Uh oh! Couldn't read the moves"),
+        }
+    }
+
+    scores.into_iter().sum::<u32>()
+}
+
+fn play_tournament_unencrypted(path: &str) -> u32 {
+    let file = fs::File::open(path).expect("Could not find data file");
+    let mut scores = Vec::new();
+
+    for line in BufReader::new(file).lines() {
+        match line {
+            Ok(l) => {
+                let moves: Vec<&str> = l.trim().split(" ").collect();
+                let their_move = match moves[0] {
+                    "A" => Move::Rock,
+                    "B" => Move::Paper,
+                    "C" => Move::Scissors,
+                    _ => panic!("Not a valid move for opponent"),
+                };
+                let my_move = match moves[1] {
+                    "X" => Outcome::Loss,
+                    "Y" => Outcome::Draw,
+                    "Z" => Outcome::Win,
+                    _ => panic!("Not a valid outcome for me"),
+                };
+                let match_ = MatchUnencrypted {
+                    opponent: their_move,
+                    me: my_move,
+                };
+                scores.push(match_.play());
+            }
+            Err(_) => println!("Uh oh! Couldn't read the moves"),
+        }
+    }
+
+    scores.into_iter().sum::<u32>()
 }
 
 fn main() {
-    let mut elves: Vec<Elf> = Vec::new();
-    let mut calorie_totals: Vec<i32> = Vec::new();
+    let file_path = "data/day2.txt";
+    let score = play_tournament(file_path);
+    let score_unencrypted = play_tournament_unencrypted(file_path);
 
-    let file = fs::read_to_string("data/day1_part1.txt").expect("Couldn't open input file.");
-
-    let mut accumulator = 0;
-    for line in file.split("\n") {
-        match line.parse::<i32>() {
-            Ok(value) => accumulator += value,
-            Err(_) => {
-                calorie_totals.push(accumulator);
-                accumulator = 0;
-            }
-        };
-    }
-
-    for (i, total) in calorie_totals.iter().enumerate() {
-        elves.push(Elf {
-            id: i as i32,
-            calories: *total,
-        })
-    }
-
-    elves.sort_by(|a, b| {a.calories.cmp(&b.calories)});
-    let highest_elf = elves.last().unwrap();
-
-    println!(
-        "Elf {} has the most calories with {}",
-        highest_elf.id, highest_elf.calories
-    );
-
-    let mut top_3_total = 0;
-    for _ in 0..3 {
-        top_3_total += elves.pop().unwrap().calories;
-    }
-
-    println!("The top 3 elves have {} calories", top_3_total)
+    println!("My Score: {}", score);
+    println!("My Unencrypted Score: {}", score_unencrypted);
 }
