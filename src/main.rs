@@ -1,46 +1,47 @@
-use std::fs;
+use std::{fs, io};
 
-struct Elf {
-    id: i32,
-    calories: i32,
+#[derive(Clone, Copy)]
+enum Move {
+    Rock,
+    Paper,
+    Scissors,
+}
+
+enum Outcome {
+    Loss(u32),
+    Draw(u32),
+    Win(u32),
+}
+
+const ROCK: u32 = 0;
+const PAPER: u32 = 3;
+const SCISSORS: u32 = 6;
+const LOSS: u32 = 0;
+const DRAW: u32 = 3;
+const WIN: u32 = 6;
+
+struct Match {
+    player_1_move: Move,
+    player_2_move: Move,
+}
+
+impl Match {
+    fn play(&self) -> Outcome {
+        match (self.player_1_move, self.player_2_move) {
+            (Move::Rock, Move::Rock) => Outcome::Draw(ROCK + ROCK + DRAW),
+            (Move::Rock, Move::Paper) => Outcome::Loss(ROCK + PAPER + LOSS),
+            (Move::Rock, Move::Scissors) => Outcome::Win(ROCK + SCISSORS + WIN),
+            (Move::Paper, Move::Rock) => Outcome::Win(PAPER + ROCK + WIN),
+            (Move::Paper, Move::Paper) => Outcome::Draw(PAPER + PAPER + DRAW),
+            (Move::Paper, Move::Scissors) => Outcome::Loss(PAPER + SCISSORS + LOSS),
+            (Move::Scissors, Move::Rock) => Outcome::Loss(SCISSORS + ROCK + LOSS),
+            (Move::Scissors, Move::Paper) => Outcome::Win(SCISSORS + PAPER + WIN),
+            (Move::Scissors, Move::Scissors) => Outcome::Draw(SCISSORS + SCISSORS + DRAW),
+        }
+    }
 }
 
 fn main() {
-    let mut elves: Vec<Elf> = Vec::new();
-    let mut calorie_totals: Vec<i32> = Vec::new();
-
-    let file = fs::read_to_string("data/day1_part1.txt").expect("Couldn't open input file.");
-
-    let mut accumulator = 0;
-    for line in file.split("\n") {
-        match line.parse::<i32>() {
-            Ok(value) => accumulator += value,
-            Err(_) => {
-                calorie_totals.push(accumulator);
-                accumulator = 0;
-            }
-        };
-    }
-
-    for (i, total) in calorie_totals.iter().enumerate() {
-        elves.push(Elf {
-            id: i as i32,
-            calories: *total,
-        })
-    }
-
-    elves.sort_by(|a, b| {a.calories.cmp(&b.calories)});
-    let highest_elf = elves.last().unwrap();
-
-    println!(
-        "Elf {} has the most calories with {}",
-        highest_elf.id, highest_elf.calories
-    );
-
-    let mut top_3_total = 0;
-    for _ in 0..3 {
-        top_3_total += elves.pop().unwrap().calories;
-    }
-
-    println!("The top 3 elves have {} calories", top_3_total)
+    let strategy_file = fs::File::open("data/day2.txt").expect("Could not find data file");
+    let mut buffer = io::BufReader::new(strategy_file);
 }
